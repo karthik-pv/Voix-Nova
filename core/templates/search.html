@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form action="{% url 'tfidf_search' %}" method="get">
+    <input type="text" name="q" placeholder="Search for products..." required>
+    <button type="submit">Search</button>
+</form>
+
+</body>
+</html>
