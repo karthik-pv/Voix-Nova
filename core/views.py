@@ -1,16 +1,25 @@
-from django.db.models import Q  # Correctly import Q for query building
+from django.db.models import Q
 from django.shortcuts import render
 from django.http import JsonResponse
 from .models import Products, Cart, PreviousOrders
 from .ai_model import GeminiClient
 from .serializers import ProductSerializer
 from .tfidf import tfidf_search
+from rest_framework.decorators import api_view
 
 ai = GeminiClient()
 
 
 def home(request):
     return render(request, "search.html")
+
+
+@api_view(["GET"])
+def get_all_products(request):
+    print("here")
+    products = Products.objects.all()
+    serializer = ProductSerializer(products, many=True)
+    return JsonResponse(serializer.data, safe=False)
 
 
 def group_search_view(request):
