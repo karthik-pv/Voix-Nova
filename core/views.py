@@ -1,46 +1,113 @@
-from django.db.models import Q  # Correctly import Q for query building
+from django.db.models import Q
 from django.shortcuts import render
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-from .models import Products
+from django.http import JsonResponse
+from .models import Products, Cart, PreviousOrders
+from .ai_model import GeminiClient
+from .serializers import ProductSerializer
+from .tfidf import tfidf_search
+from rest_framework.decorators import api_view
+
+ai = GeminiClient()
 
 
-def tfidf_search(request):
-    query = request.GET.get('q', '')  # Get the search query from the request
-    if not query:
-        return render(request, 'search_results.html', {'query': query, 'results': []})
-
-    # Fetch all products with non-empty descriptions
-    products = Products.objects.exclude(description__isnull=True).exclude(description__exact='')
-    if not products:
-        return render(request, 'search_results.html', {'query': query, 'results': []})
-
-    # Extract product descriptions
-    descriptions = [product.description for product in products]
-
-    # Add the query to the descriptions for vectorization
-    descriptions.append(query)
-
-    # Compute TF-IDF matrix
-    vectorizer = TfidfVectorizer()
-    tfidf_matrix = vectorizer.fit_transform(descriptions)
-
-    # Calculate cosine similarity of the query with all product descriptions
-    query_vector = tfidf_matrix[-1]  # The last row corresponds to the query
-    product_vectors = tfidf_matrix[:-1]  # All rows except the last are product descriptions
-    similarity_scores = cosine_similarity(query_vector, product_vectors).flatten()
-
-    # Pair products with their similarity scores
-    product_similarity = list(zip(products, similarity_scores))
-
-    # Sort products by similarity score (highest first)
-    sorted_products = sorted(product_similarity, key=lambda x: x[1], reverse=True)
-
-    # Filter results with a minimum similarity threshold (optional)
-    results = [product for product, score in sorted_products if score > 0]
-
-    return render(request, 'search_results.html', {'query': query, 'results': results})
 def home(request):
-    return render(request, 'search.html')
+    return render(request, "search.html")
 
 
+@api_view(["GET"])
+def get_all_products(request):
+    print("here")
+    products = Products.objects.all()
+    serializer = ProductSerializer(products, many=True)
+    return JsonResponse(serializer.data, safe=False)
+
+
+def group_search_view(request):
+    query = request.GET.get("q", "")
+    print(f"Search Query: {query}")
+    results = tfidf_search(query)
+    relevant_data = str(results["results"])
+    ai_response = ai.get_description_of_products(
+        relevant_data=relevant_data, query=query
+    )
+    print(len(results["results"]))
+    return JsonResponse(
+        {
+            "query": query,
+            "results": results.get("results", []),
+            "ai_response": ai_response,
+        },
+        safe=False,
+    )
+
+
+def particular_search_view(request):
+    query = request.GET.get("q", "")
+    print(f"Search Query: {query}")
+    results = tfidf_search(query)
+    temp = results["results"]
+    results["results"] = temp[0]
+    ai_response = ai.get_detailed_description_of_product(
+        relevant_data=str(results["results"])
+    )
+    return JsonResponse(
+        {
+            "query": query,
+            "results": results.get("results", []),
+            "ai_response": ai_response,
+        },
+        safe=False,
+    )
+
+
+def add_to_cart(request):
+    query = request.GET.get("q", "")
+    print(f"Search Query: {query}")
+    results = tfidf_search(query)["results"]
+
+    if not results:
+        return JsonResponse({"message": "No products found to add to cart"}, status=404)
+
+    add_to_cart_id = results[0]["id"]
+    product = Products.objects.get(id=add_to_cart_id)
+    cart_item = Cart(product=product)
+    cart_item.save()
+
+    # Serialize the product data to return
+    product_data = ProductSerializer(product).data
+    return JsonResponse(
+        {"message": "Added to cart", "product": product_data}, status=201
+    )
+
+
+def finalize_cart(request):
+    # Ensure the request method is GET
+    if request.method == "GET":
+        # Retrieve all cart items
+        cart_items = Cart.objects.all()
+
+        if not cart_items.exists():
+            return JsonResponse(
+                {"total_cost": 0.0, "message": "Cart is empty."}, status=200
+            )
+
+        # Initialize total cost
+        total_cost = 0.0
+
+        # Move products from cart to previous orders and calculate total cost
+        for cart_item in cart_items:
+            total_cost += float(
+                cart_item.product.price
+            )  # Assuming price is a Decimal or float
+
+            # Create a PreviousOrders entry for each product
+            PreviousOrders.objects.create(product=cart_item.product)
+
+        # Clear the cart by deleting all cart items
+        cart_items.delete()
+
+        # Return the total cost as a JSON response
+        return JsonResponse({"total_cost": str(total_cost)}, status=200)
+
+    # If the request method is not GET, return an error response
+    return JsonResponse({"error": "Invalid request method"}, status=400)
