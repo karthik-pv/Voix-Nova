@@ -6,8 +6,10 @@ import json
 
 from .serializers import ProductSerializer
 
+global returnable_list
 
 def tfidf_search(query):
+    global returnable_list
     if not query:
         return {"query": query, "results": []}
 
@@ -29,10 +31,11 @@ def tfidf_search(query):
 
     product_similarity = list(zip(products, similarity_scores))
     sorted_products = sorted(product_similarity, key=lambda x: x[1], reverse=True)
-
+    if len(sorted_products):
+        returnable_list = sorted_products
     results = [
         ProductSerializer(product).data  # Use the serializer here
-        for product, score in sorted_products
+        for product, score in returnable_list
         if score > 0
     ][:10]
 

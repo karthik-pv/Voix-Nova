@@ -6,6 +6,7 @@ from .views import (
     add_to_cart,
     finalize_cart,
     get_all_products,
+    get_cart_products
 )
 
 urlpatterns = [
@@ -14,5 +15,6 @@ urlpatterns = [
     path("api/particular_search/", particular_search_view, name="particular_search"),
     path("api/add_to_cart/", add_to_cart, name="add_to_cart"),
     path("api/finalize_cart/", finalize_cart, name="finalize_cart"),
+    path("api/get_cart_products/", get_cart_products , name = "get_cart_products"),
     path("home/", home, name="home"),
 ]

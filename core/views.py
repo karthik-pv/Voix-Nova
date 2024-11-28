@@ -109,3 +109,20 @@ def finalize_cart(request):
 
     # If the request method is not GET, return an error response
     return JsonResponse({"error": "Invalid request method"}, status=400)
+
+def get_cart_products(request):
+    if request.method == "GET":
+        # Retrieve all cart items
+        cart_items = Cart.objects.all()
+
+        if not cart_items.exists():
+            return JsonResponse({"cart": [], "message": "Cart is empty."}, status=200)
+
+        # Serialize the products in the cart using ProductSerializer
+        products = [cart_item.product for cart_item in cart_items]
+        serialized_products = ProductSerializer(products, many=True).data
+
+        return JsonResponse({"cart": serialized_products}, status=200)
+
+    # If the request method is not GET, return an error response
+    return JsonResponse({"error": "Invalid request method"}, status=400)
