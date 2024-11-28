@@ -6,6 +6,8 @@ from .ai_model import GeminiClient
 from .serializers import ProductSerializer
 from .tfidf import tfidf_search
 from rest_framework.decorators import api_view
+import json
+from django.views.decorators.csrf import csrf_exempt
 
 ai = GeminiClient()
 
@@ -27,15 +29,11 @@ def group_search_view(request):
     print(f"Search Query: {query}")
     results = tfidf_search(query)
     relevant_data = str(results["results"])
-    ai_response = ai.get_description_of_products(
-        relevant_data=relevant_data, query=query
-    )
     print(len(results["results"]))
     return JsonResponse(
         {
             "query": query,
             "results": results.get("results", []),
-            "ai_response": ai_response,
         },
         safe=False,
     )
@@ -47,37 +45,37 @@ def particular_search_view(request):
     results = tfidf_search(query)
     temp = results["results"]
     results["results"] = temp[0]
-    ai_response = ai.get_detailed_description_of_product(
-        relevant_data=str(results["results"])
-    )
     return JsonResponse(
         {
             "query": query,
             "results": results.get("results", []),
-            "ai_response": ai_response,
         },
         safe=False,
     )
 
-
 def add_to_cart(request):
-    query = request.GET.get("q", "")
-    print(f"Search Query: {query}")
-    results = tfidf_search(query)["results"]
+    if request.method == "GET":
+        query = request.GET.get("q",'')
+        print(f"Search Query bsias: {query}")
 
-    if not results:
-        return JsonResponse({"message": "No products found to add to cart"}, status=404)
+        # Perform the search
+        results = tfidf_search(query)["results"]
 
-    add_to_cart_id = results[0]["id"]
-    product = Products.objects.get(id=add_to_cart_id)
-    cart_item = Cart(product=product)
-    cart_item.save()
+        if not results:
+            return JsonResponse({"message": "No products found to add to cart"}, status=404)
 
-    # Serialize the product data to return
-    product_data = ProductSerializer(product).data
-    return JsonResponse(
-        {"message": "Added to cart", "product": product_data}, status=201
-    )
+        add_to_cart_id = results[0]["id"]
+        product = Products.objects.get(id=add_to_cart_id)
+        cart_item = Cart(product=product)
+        cart_item.save()
+
+        # Serialize the product data to return
+        product_data = ProductSerializer(product).data
+        return JsonResponse(
+            {"message": "Added to cart", "product": product_data}, status=201
+        )
+    else:
+        return JsonResponse({"message": "Invalid request method"}, status=405)
 
 
 def finalize_cart(request):
