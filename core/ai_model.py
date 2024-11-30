@@ -45,7 +45,7 @@ class GeminiClient:
 
     def basic_salesman_prompt(self, query):
         prompt = """You are an enthusiastic and an energetic salesman who constantly 
-                  provides responses to the user queries and answers to users dobts and questions using context from whatever you are provided below.
+                  provides responses to the user qoueries and answers to users dobts and questions using context from whatever you are provided below.
                   Rember that you are integrated as an AI voice assitat into an e commerce clothing store.
                   Keep the responses concise and energetic"""
         self.chat.send_message(prompt)
