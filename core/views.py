@@ -9,10 +9,31 @@ from rest_framework.decorators import api_view
 import json
 from django.views.decorators.csrf import csrf_exempt
 
+from .utils import image_similarity_search
+
 ai = GeminiClient()
 
+filter_var = []
+def filter_reset():
+    global filter_var
+    filter_var = []
+
+def filter(filter):
+    global filter_var
+    filter=filter.lower()
+    filter_var.append(filter)
+    return filter_var
+
+def home_page_conversationalist(request):
+    if request.method == "GET":
+        transcript = ai.home_page()
+        return JsonResponse({"message": transcript})
+    return JsonResponse({"message": "Invalid request"})
 
 def home(request):
+    similar_products = image_similarity_search()
+    print(len(similar_products))
+    print(similar_products)
     return render(request, "search.html")
 
 
