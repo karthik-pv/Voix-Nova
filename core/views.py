@@ -16,7 +16,13 @@ def home(request):
     return render(request, "search.html")
 
 
-@api_view(["GET"])
+def home_page_conversationalist(request):
+    if request.method == "GET":
+        transcript = ai.home_page()
+        return JsonResponse({"message": transcript})
+    return JsonResponse({"message": "Invalid request"})
+
+
 def get_all_products(request):
     print("here")
     products = Products.objects.all()
@@ -53,16 +59,19 @@ def particular_search_view(request):
         safe=False,
     )
 
+
 def add_to_cart(request):
     if request.method == "GET":
-        query = request.GET.get("q",'')
+        query = request.GET.get("q", "")
         print(f"Search Query bsias: {query}")
 
         # Perform the search
         results = tfidf_search(query)["results"]
 
         if not results:
-            return JsonResponse({"message": "No products found to add to cart"}, status=404)
+            return JsonResponse(
+                {"message": "No products found to add to cart"}, status=404
+            )
 
         add_to_cart_id = results[0]["id"]
         product = Products.objects.get(id=add_to_cart_id)
@@ -109,6 +118,7 @@ def finalize_cart(request):
 
     # If the request method is not GET, return an error response
     return JsonResponse({"error": "Invalid request method"}, status=400)
+
 
 def get_cart_products(request):
     if request.method == "GET":
