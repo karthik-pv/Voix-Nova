@@ -14,21 +14,26 @@ from .utils import image_similarity_search
 ai = GeminiClient()
 
 filter_var = []
+
+
 def filter_reset():
     global filter_var
     filter_var = []
 
+
 def filter(filter):
     global filter_var
-    filter=filter.lower()
+    filter = filter.lower()
     filter_var.append(filter)
     return filter_var
+
 
 def home_page_conversationalist(request):
     if request.method == "GET":
         transcript = ai.home_page()
         return JsonResponse({"message": transcript})
     return JsonResponse({"message": "Invalid request"})
+
 
 def home(request):
     similar_products = image_similarity_search()
@@ -40,6 +45,22 @@ def home(request):
 def home_page_conversationalist(request):
     if request.method == "GET":
         transcript = ai.home_page()
+        return JsonResponse({"message": transcript})
+    return JsonResponse({"message": "Invalid request"})
+
+
+def product_list_page_conversationalist(request):
+    if request.method == "GET":
+        query = request.GET.get("search")
+        transcript = ai.product_list_page(query)
+        return JsonResponse({"message": transcript})
+    return JsonResponse({"message": "Invalid request"})
+
+
+def filter_conversationalist(request):
+    if request.method == "GET":
+        query = request.GET.get("filterMsg")
+        transcript = ai.filtering_interaction(query)
         return JsonResponse({"message": transcript})
     return JsonResponse({"message": "Invalid request"})
 
