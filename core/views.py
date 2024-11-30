@@ -7,10 +7,15 @@ from .serializers import ProductSerializer
 from .tfidf import tfidf_search
 from rest_framework.decorators import api_view
 
+from .utils import find_similar_images
+
 ai = GeminiClient()
 
 
 def home(request):
+    similar_products = find_similar_images('core/product_images','core/product_images/product_1_image1.jpg')
+    print(len(similar_products))
+    print(similar_products)
     return render(request, "search.html")
 
 
