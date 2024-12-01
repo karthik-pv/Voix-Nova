@@ -68,6 +68,14 @@ def product_details_page_conversationalist(request):
     return JsonResponse({"message": "Invalid request"})
 
 
+def product_description_conversationalist(request):
+    if request.method == "GET":
+        query = request.GET.get("search")
+        transcript = ai.product_description(query)
+        return JsonResponse({"message": transcript})
+    return JsonResponse({"message": "Invalid request"})
+
+
 def get_all_products(request):
     print("here")
     products = Products.objects.all()
