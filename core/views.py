@@ -95,9 +95,14 @@ def image_similarity_view(request):
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
-def filter_reset():
-    global filter_var
-    filter_var.clear()
+def filter_reset(request):
+    if request.method == "GET":
+        global filter_var
+        filter_var.clear()
+        return JsonResponse(
+            {"message": "Filter reset successfully", "filters": filter_var}, status=200
+        )
+    return JsonResponse({"message": "Inavlid request"})
 
 
 def home_page_conversationalist(request):

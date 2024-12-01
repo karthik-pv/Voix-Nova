@@ -17,6 +17,7 @@ from .views import (
     product_details_page_conversationalist,
     image_similarity_view,
     recommendations_view,
+    filter_reset,
 )
 
 urlpatterns = [
@@ -54,4 +55,5 @@ urlpatterns = [
     path("api/finalize_cart/", finalize_cart, name="finalize_cart"),
     path("api/get_cart_products/", get_cart_products, name="get_cart_products"),
     path("home/", home, name="home"),
+    path("api/filter_reset/", filter_reset, name="filter_reset"),
 ]
