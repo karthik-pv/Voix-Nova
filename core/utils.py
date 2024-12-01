@@ -206,3 +206,23 @@ def recommend_filters(previous_orders):
         recommendations["seasonal"] = ["T-Shirts", "Pima Cotton", "Casual"]
 
     return recommendations
+
+
+def filter_extractor(query):
+    products = Products.objects.all()
+    filters = set()
+
+    for product in products:
+        filters.add(product.activity)
+        filters.add(product.color)
+        filters.add(product.gender)
+        filters.add(product.category)
+
+    returnable_filters = []
+    query_words = set(word.lower() for word in query.split())
+
+    for filter_value in filters:
+        if filter_value.lower() in query_words:
+            returnable_filters.append(filter_value)
+
+    return returnable_filters

@@ -9,7 +9,7 @@ from rest_framework.decorators import api_view
 import json
 from django.views.decorators.csrf import csrf_exempt
 
-from .utils import image_similarity_search
+from .utils import image_similarity_search, filter_extractor
 
 ai = GeminiClient()
 
@@ -61,7 +61,8 @@ def filter_conversationalist(request):
     if request.method == "GET":
         query = request.GET.get("filterMsg")
         transcript = ai.filtering_interaction(query)
-        return JsonResponse({"message": transcript})
+        filters = filter_extractor(query)
+        return JsonResponse({"message": transcript, "filters": filters})
     return JsonResponse({"message": "Invalid request"})
 
 
