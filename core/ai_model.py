@@ -1,6 +1,8 @@
 import threading
 import google.generativeai as genai
 import logging
+from .tfidf import tfidf_search
+from urllib.parse import urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +23,7 @@ class GeminiClient:
     def __init__(self):
         if self._initialized:
             return
-        api_key = "AIzaSyB5VNULcuxAjbppS2DPRyErxNd7jXiCky0"
+        api_key = "AIzaSyDj4YHEMjddEOTxlyfgdM4eu2glzCHQsFI"
         if not api_key:
             raise ValueError(
                 "Gemini API key not found in settings or environment variables"
@@ -29,7 +31,7 @@ class GeminiClient:
         genai.configure(api_key=api_key)
 
         try:
-            self.model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+            self.model = genai.GenerativeModel(model_name="gemini-1.5-flash", tools=[])
             self._initialized = True
         except Exception as e:
             logger.error(f"Error initializing Gemini models: {str(e)}")
@@ -41,24 +43,59 @@ class GeminiClient:
             self._chat = self.model.start_chat(enable_automatic_function_calling=True)
         return self._chat
 
-    def get_detailed_description_of_product(self, relevant_data):
-        prompt = (
-            "I will be giving you the details of a product. "
-            + "I want you to give a human friendly response, where you talk about the product as a human salesman. "
-            + f"PRODUCT_DETAILS = {relevant_data}"
-        )
-        response = self.chat.send_message(prompt)
-        reply = response._result.candidates[0].content.parts[0].text.strip()
-        return reply
+    def basic_salesman_prompt(self, query):
+        prompt = """You are an enthusiastic and an energetic salesman who constantly 
+                  provides responses to the user qoueries and answers to users dobts and questions using context from whatever you are provided below.
+                  Rember that you are integrated as an AI voice assitat into an e commerce clothing store.
+                  Keep the responses concise and energetic"""
+        self.chat.send_message(prompt)
 
-    def get_description_of_products(self, query, relevant_data):
+    def home_page(self):
         prompt = (
-            "I will be giving you the details of a few products. "
-            + "I want you to give a human friendly response, where you talk about the products as a human salesman. "
-            + "Mention the top 3 products, no need to go beyond that . \n\n"
-            + f"PRODUCT_DETAILS = {relevant_data}\n\n"
-            + f"QUERY = {query}"
+            "You are an enthusiastic and energetic salesman who is eager to help users. "
+            + "If you havent seen this prompt before, Introduce yourself as NOVA, an AI assistant present to help the user. "
+            + "The user is currently in the home page. "
+            + "Ask him if he has something in mind or whether he would like some recommendations. "
+            + "Make sure your response only contains things the salesman would say, and give a short response. "
+            + "I will be reading this out for the user. "
         )
-        response = self.chat.send_message(prompt)
-        reply = response._result.candidates[0].content.parts[0].text.strip()
-        return reply
+        result = self.chat.send_message(prompt)
+        response = result.candidates[0].content.parts[0].text
+        return response
+
+    def product_list_page(self, query):
+        prompt = (
+            "You are an enthusiastic and energetic salesman who is eager to help users. "
+            + f"The user is currently in the product list page and is looking for {query}."
+            + "Ask the user whether he wants to filter products, or whether he wants to know more about a particular product. "
+            + "Make sure to give a very short reply, the way the salesman would. "
+            + "I will be reading this out for the user. "
+        )
+        result = self.chat.send_message(prompt)
+        response = result.candidates[0].content.parts[0].text
+        return response
+
+    def filtering_interaction(self, query, current_filters):
+        prompt = (
+            "The user is trying to filter the products that are visible to him. "
+            + f"He is trying to filter in this manner - '{query}'. "
+            + f"The filters currently implemented are - '{current_filters}'. "
+            + "If his statement includes a category of filters, then mention that you have filtered according to this category. "
+            + "Offer to filter according to the remaining categories he hasn't filtered by yet. "
+            + "The categories of filters available are colors, categories, gender and fit. "
+        )
+        result = self.chat.send_message(prompt)
+        response = result.candidates[0].content.parts[0].text
+        return response
+
+    def product_details_page(self, query):
+        prompt = (
+            "You are an enthusiastic and energetic salesman who is eager to help users. "
+            + f"The user is searching for this item in particular - {query}. "
+            + "Ask the user whether he wants more details about the product or whether he wants to add the item to the cart. "
+            + "Make sure to give a very short reply, the way the salesman would. "
+            + "I will be reading this out for the user. "
+        )
+        result = self.chat.send_message(prompt)
+        response = result.candidates[0].content.parts[0].text
+        return response

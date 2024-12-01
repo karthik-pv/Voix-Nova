@@ -13,14 +13,21 @@ import cv2
 from scipy.spatial.distance import cdist
 import matplotlib.pyplot as plt
 
-def image_similarity_search(image_folder='core/product_images', query_image_path='core/product_images/product_2_image1.jpg', bins=(16, 16, 16), top_n=5):
+
+def image_similarity_search(
+    image_folder="core/product_images",
+    query_image_path="core/product_images/product_2_image1.jpg",
+    bins=(16, 16, 16),
+    top_n=5,
+):
     def get_products_for_paths(image_paths):
         products = Products.objects.filter(
-            Q(image1_url__in=image_paths) |
-            Q(image2_url__in=image_paths) |
-            Q(image3_url__in=image_paths)
+            Q(image1_url__in=image_paths)
+            | Q(image2_url__in=image_paths)
+            | Q(image3_url__in=image_paths)
         )
         return products
+
     def remove_background(image):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         _, mask = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
@@ -59,7 +66,7 @@ def image_similarity_search(image_folder='core/product_images', query_image_path
         if query_features is None:
             print("Error processing query image.")
             return []
-        distances = cdist([query_features], features, metric='euclidean')[0]
+        distances = cdist([query_features], features, metric="euclidean")[0]
         sorted_indices = np.argsort(distances)
         results = [(image_paths[idx], distances[idx]) for idx in sorted_indices]
         return results[:top_n]
@@ -92,14 +99,12 @@ def image_similarity_search(image_folder='core/product_images', query_image_path
         stri = tup[0]
         id = stri[28]
         if stri[29].isdigit():
-            id+=stri[29]
+            id += stri[29]
         ids.append(id)
-        id=""
+        id = ""
     print(ids)
 
     return ids
-
-
 
 
 def get_combined_descriptions():
@@ -117,9 +122,7 @@ def recommend_filters(previous_orders):
     :return: A dictionary of recommended filters.
     """
     if not previous_orders.exists():
-        return {
-            "message": "No previous orders found. Recommendations unavailable."
-        }
+        return {"message": "No previous orders found. Recommendations unavailable."}
 
     # Extract attribute data from previous orders
     attributes = {
@@ -204,3 +207,38 @@ def recommend_filters(previous_orders):
 
     return recommendations
 
+
+def filter_extractor(query, returnable_filters):
+    products = Products.objects.all()
+    filters = set()
+
+    for product in products:
+        filters.add(product.activity)
+        filters.add(product.color)
+        filters.add(product.gender)
+        filters.add(product.category)
+        filters.add(product.fit)
+
+    query_words = query.split()  # Split the query into words
+    query_phrases = set()
+
+    # Generate single words and adjacent two-word combinations
+    for i in range(len(query_words)):
+        # Add single words
+        query_phrases.add(query_words[i].lower())
+
+        # Add adjacent two-word combinations
+        if i < len(query_words) - 1:
+            phrase = f"{query_words[i].lower()} {query_words[i + 1].lower()}"
+            query_phrases.add(phrase)
+
+    for filter_value in filters:
+        if filter_value.lower() in query_phrases:
+            returnable_filters.append(filter_value)
+
+    return returnable_filters
+
+
+def reset_filters():
+    global returnable_filters
+    returnable_filters.clear()
