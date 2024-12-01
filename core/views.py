@@ -8,7 +8,11 @@ from .tfidf import tfidf_search
 from rest_framework.decorators import api_view
 import json
 from django.views.decorators.csrf import csrf_exempt
+
 from .utils import image_similarity_search, filter_extractor
+
+from .utils import image_similarity_search, filter_extractor, recommend_filters
+
 
 ai = GeminiClient()
 filter_var = []
@@ -18,6 +22,15 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
 
+
+
+def recommendations_view(request):
+    """
+    API endpoint to return product filter recommendations.
+    :param request: HTTP request.
+    :return: JsonResponse with the recommendations.
+    """
+    return recommend_filters()
 @csrf_exempt
 def image_similarity_view(request):
     if request.method == "POST":
@@ -54,6 +67,7 @@ def image_similarity_view(request):
             # Convert products to a list of dictionaries (for JSON response)
             product_list = [
                 {
+
                     "id": product.id,
                     "name": product.name,
                     "color": product.color,
@@ -72,6 +86,24 @@ def image_similarity_view(request):
                         "image2": product.image2_url,
                         "image3": product.image3_url,
                     },
+
+                    'id': product.id,
+                    'name': product.name,
+                    'color': product.color,
+                    'price': float(product.price),
+                    'gender': product.gender,
+                    'category': product.category,
+                    'length': product.length,
+                    'fit': product.fit,
+                    'activity': product.activity,
+                    'fabric': product.fabric,
+                    'description': product.description,
+                    'images': {
+                        'image1': product.image1_url,
+                        'image2': product.image2_url,
+                        'image3': product.image3_url,
+                    }
+
                 }
                 for product in products
             ]
