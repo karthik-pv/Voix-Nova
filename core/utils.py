@@ -1,4 +1,5 @@
 from django.db.models import Q
+from django.http import JsonResponse
 
 from .models import Products
 from .models  import PreviousOrders
@@ -243,3 +244,125 @@ def filter_extractor(query, returnable_filters):
 def reset_filters():
     global returnable_filters
     returnable_filters.clear()
+
+
+
+
+def recommend_filters():
+    """
+    Generate product recommendations based on frequency-based filter criteria and seasonal suggestions.
+    :return: A JsonResponse with separate sets of recommended products.
+    """
+    # Extract all products from the database for analysis
+    all_products = Products.objects.all()
+
+    if not all_products.exists():
+        return JsonResponse({"message": "No products found. Recommendations unavailable."}, status=404)
+
+    # Extract attribute data from products
+    attributes = {
+        "gender": [],
+        "color": [],
+        "fabric": [],
+        "activity": [],
+        "fit": [],
+        "length": [],
+        "category": [],
+        "price": [],
+    }
+
+    for product in all_products:
+        attributes["gender"].append(product.gender)
+        attributes["color"].append(product.color)
+        attributes["fabric"].append(product.fabric)
+        attributes["activity"].append(product.activity)
+        attributes["fit"].append(product.fit)
+        attributes["length"].append(product.length)
+        attributes["category"].append(product.category)
+        attributes["price"].append(float(product.price))
+
+    # 1. Frequency Analysis to find top filter values
+    frequency_based_recommendations = {}
+    for key, values in attributes.items():
+        if key == "price":
+            # Compute price statistics
+            prices = np.array(values)
+            frequency_based_recommendations["price_range"] = {
+                "min": round(np.min(prices), 2),
+                "max": round(np.max(prices), 2),
+                "avg": round(np.mean(prices), 2),
+            }
+        else:
+            counter = Counter(values)
+            top_choices = counter.most_common(3)  # Top 3 most common filter values
+            frequency_based_recommendations[key] = [choice[0] for choice in top_choices if choice[0]]
+
+    # 2. Seasonal/Time-Based Suggestions
+    current_month = datetime.now().month
+    seasonal_based_recommendations = {}
+    if current_month in [12, 1, 2]:
+        seasonal_based_recommendations["seasonal"] = ["Sweaters", "Long Sleeve Shirts", "Wool"]
+    elif current_month in [6, 7, 8]:
+        seasonal_based_recommendations["seasonal"] = ["Tank Tops", "Shorts", "Cotton"]
+    else:
+        seasonal_based_recommendations["seasonal"] = ["T-Shirts", "Pima Cotton", "Casual"]
+
+    # 3. Filter products based on the recommendations
+    # Frequency-based products
+    frequency_filtered_products = all_products
+    for key, values in frequency_based_recommendations.items():
+        if key != "price_range" and key != "seasonal":
+            frequency_filtered_products = frequency_filtered_products.filter(**{f"{key}__in": values})
+
+    # Seasonal-based products
+    seasonal_filtered_products = all_products
+    for key, values in seasonal_based_recommendations.items():
+        if key == "seasonal":
+            seasonal_filtered_products = seasonal_filtered_products.filter(category__in=values)
+
+    # Convert the filtered products to a list of dictionaries for JSON response
+    frequency_product_list = [
+        {
+            "id": product.id,
+            "name": product.name,
+            "gender": product.gender,
+            "color": product.color,
+            "fabric": product.fabric,
+            "activity": product.activity,
+            "fit": product.fit,
+            "length": product.length,
+            "category": product.category,
+            "price": product.price,
+            "image1_url": product.image1_url,
+            "image2_url": product.image2_url,
+            "image3_url": product.image3_url,
+            "description": product.description
+        }
+        for product in frequency_filtered_products
+    ]
+
+    seasonal_product_list = [
+        {
+            "id": product.id,
+            "name": product.name,
+            "gender": product.gender,
+            "color": product.color,
+            "fabric": product.fabric,
+            "activity": product.activity,
+            "fit": product.fit,
+            "length": product.length,
+            "category": product.category,
+            "price": product.price,
+            "image1_url":product.image1_url,
+            "image2_url": product.image2_url,
+            "image3_url": product.image3_url,
+            "description":product.description
+        }
+        for product in seasonal_filtered_products
+    ]
+
+    return JsonResponse({
+        "frequency_based_products": frequency_product_list,
+        "seasonal_based_products": seasonal_product_list
+    }, safe=False)
+

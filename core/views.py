@@ -8,7 +8,8 @@ from .tfidf import tfidf_search
 from rest_framework.decorators import api_view
 import json
 from django.views.decorators.csrf import csrf_exempt
-from .utils import image_similarity_search, filter_extractor
+from .utils import image_similarity_search, filter_extractor, recommend_filters
+
 ai = GeminiClient()
 filter_var = []
 import os
@@ -18,6 +19,15 @@ from django.core.files.base import ContentFile
 
 from utils import image_similarity_search  # Ensure this is the correct import path
 
+
+
+def recommendations_view(request):
+    """
+    API endpoint to return product filter recommendations.
+    :param request: HTTP request.
+    :return: JsonResponse with the recommendations.
+    """
+    return recommend_filters()
 @csrf_exempt
 def image_similarity_view(request):
     if request.method == 'POST':
@@ -47,7 +57,7 @@ def image_similarity_view(request):
             if os.path.exists(temp_image_path):
                 os.remove(temp_image_path)
             ids = list(set(ids))
-            ids=ids[:3]
+            ids = ids[:3]
             # Fetch products with IDs in the given list
             products = Products.objects.filter(id__in=ids)
 
@@ -57,7 +67,7 @@ def image_similarity_view(request):
                     'id': product.id,
                     'name': product.name,
                     'color': product.color,
-                    'price': float(product.price),  # Converting Decimal to float for JSON serialization
+                    'price': float(product.price),
                     'gender': product.gender,
                     'category': product.category,
                     'length': product.length,
