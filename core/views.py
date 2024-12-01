@@ -18,14 +18,7 @@ filter_var = []
 
 def filter_reset():
     global filter_var
-    filter_var = []
-
-
-def filter(filter):
-    global filter_var
-    filter = filter.lower()
-    filter_var.append(filter)
-    return filter_var
+    filter_var.clear()
 
 
 def home_page_conversationalist(request):
@@ -58,11 +51,20 @@ def product_list_page_conversationalist(request):
 
 
 def filter_conversationalist(request):
+    global filter_var
     if request.method == "GET":
         query = request.GET.get("filterMsg")
-        transcript = ai.filtering_interaction(query)
-        filters = filter_extractor(query)
-        return JsonResponse({"message": transcript, "filters": filters})
+        transcript = ai.filtering_interaction(query, filter_var)
+        filter_extractor(query, filter_var)
+        return JsonResponse({"message": transcript, "filters": filter_var})
+    return JsonResponse({"message": "Invalid request"})
+
+
+def product_details_page_conversationalist(request):
+    if request.method == "GET":
+        query = request.GET.get("search")
+        transcript = ai.product_details_page(query)
+        return JsonResponse({"message": transcript})
     return JsonResponse({"message": "Invalid request"})
 
 

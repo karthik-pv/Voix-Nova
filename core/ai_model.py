@@ -75,13 +75,26 @@ class GeminiClient:
         response = result.candidates[0].content.parts[0].text
         return response
 
-    def filtering_interaction(self, query):
+    def filtering_interaction(self, query, current_filters):
         prompt = (
             "The user is trying to filter the products that are visible to him. "
-            + f"He is trying to filter in this manner - '{query}'"
+            + f"He is trying to filter in this manner - '{query}'. "
+            + f"The filters currently implemented are - '{current_filters}'. "
             + "If his statement includes a category of filters, then mention that you have filtered according to this category. "
-            + "Offer to filter according to the remaining categories. "
+            + "Offer to filter according to the remaining categories he hasn't filtered by yet. "
             + "The categories of filters available are colors, categories, gender and fit. "
+        )
+        result = self.chat.send_message(prompt)
+        response = result.candidates[0].content.parts[0].text
+        return response
+
+    def product_details_page(self, query):
+        prompt = (
+            "You are an enthusiastic and energetic salesman who is eager to help users. "
+            + f"The user is searching for this item in particular - {query}. "
+            + "Ask the user whether he wants more details about the product or whether he wants to add the item to the cart. "
+            + "Make sure to give a very short reply, the way the salesman would. "
+            + "I will be reading this out for the user. "
         )
         result = self.chat.send_message(prompt)
         response = result.candidates[0].content.parts[0].text

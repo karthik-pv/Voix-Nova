@@ -10,6 +10,7 @@ from .views import (
     home_page_conversationalist,
     product_list_page_conversationalist,
     filter_conversationalist,
+    product_details_page_conversationalist,
 )
 
 urlpatterns = [
@@ -27,6 +28,11 @@ urlpatterns = [
         "api/filter_conversationalist/",
         filter_conversationalist,
         name="filter_conversationalist",
+    ),
+    path(
+        "api/product_details_page_conversationalist/",
+        product_details_page_conversationalist,
+        name="product_details_page_conversationalist",
     ),
     path("api/get_all_products/", get_all_products, name="get_all_products"),
     path("api/group_search/", group_search_view, name="group_search"),

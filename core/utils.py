@@ -208,7 +208,7 @@ def recommend_filters(previous_orders):
     return recommendations
 
 
-def filter_extractor(query):
+def filter_extractor(query, returnable_filters):
     products = Products.objects.all()
     filters = set()
 
@@ -217,12 +217,28 @@ def filter_extractor(query):
         filters.add(product.color)
         filters.add(product.gender)
         filters.add(product.category)
+        filters.add(product.fit)
 
-    returnable_filters = []
-    query_words = set(word.lower() for word in query.split())
+    query_words = query.split()  # Split the query into words
+    query_phrases = set()
+
+    # Generate single words and adjacent two-word combinations
+    for i in range(len(query_words)):
+        # Add single words
+        query_phrases.add(query_words[i].lower())
+
+        # Add adjacent two-word combinations
+        if i < len(query_words) - 1:
+            phrase = f"{query_words[i].lower()} {query_words[i + 1].lower()}"
+            query_phrases.add(phrase)
 
     for filter_value in filters:
-        if filter_value.lower() in query_words:
+        if filter_value.lower() in query_phrases:
             returnable_filters.append(filter_value)
 
     return returnable_filters
+
+
+def reset_filters():
+    global returnable_filters
+    returnable_filters.clear()
