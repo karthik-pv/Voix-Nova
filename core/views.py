@@ -8,7 +8,11 @@ from .tfidf import tfidf_search
 from rest_framework.decorators import api_view
 import json
 from django.views.decorators.csrf import csrf_exempt
+
+from .utils import image_similarity_search, filter_extractor
+
 from .utils import image_similarity_search, filter_extractor, recommend_filters
+
 
 ai = GeminiClient()
 filter_var = []
@@ -17,7 +21,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
-from utils import image_similarity_search  # Ensure this is the correct import path
 
 
 
@@ -30,14 +33,14 @@ def recommendations_view(request):
     return recommend_filters()
 @csrf_exempt
 def image_similarity_view(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         try:
             # Check if an image is provided in the request
-            if 'image' not in request.FILES:
-                return JsonResponse({'error': 'No image provided'}, status=400)
+            if "image" not in request.FILES:
+                return JsonResponse({"error": "No image provided"}, status=400)
 
             # Save the uploaded image to a temporary directory
-            uploaded_image = request.FILES['image']
+            uploaded_image = request.FILES["image"]
             temp_image_path = default_storage.save(
                 f"temp/{uploaded_image.name}", ContentFile(uploaded_image.read())
             )
@@ -64,6 +67,26 @@ def image_similarity_view(request):
             # Convert products to a list of dictionaries (for JSON response)
             product_list = [
                 {
+
+                    "id": product.id,
+                    "name": product.name,
+                    "color": product.color,
+                    "price": float(
+                        product.price
+                    ),  # Converting Decimal to float for JSON serialization
+                    "gender": product.gender,
+                    "category": product.category,
+                    "length": product.length,
+                    "fit": product.fit,
+                    "activity": product.activity,
+                    "fabric": product.fabric,
+                    "description": product.description,
+                    "images": {
+                        "image1": product.image1_url,
+                        "image2": product.image2_url,
+                        "image3": product.image3_url,
+                    },
+
                     'id': product.id,
                     'name': product.name,
                     'color': product.color,
@@ -80,16 +103,17 @@ def image_similarity_view(request):
                         'image2': product.image2_url,
                         'image3': product.image3_url,
                     }
+
                 }
                 for product in products
             ]
 
-            return JsonResponse({'products': product_list}, status=200)
+            return JsonResponse({"products": product_list}, status=200)
 
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+            return JsonResponse({"error": str(e)}, status=500)
 
-    return JsonResponse({'error': 'Invalid request method'}, status=405)
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
 def filter_reset():
@@ -140,6 +164,14 @@ def product_details_page_conversationalist(request):
     if request.method == "GET":
         query = request.GET.get("search")
         transcript = ai.product_details_page(query)
+        return JsonResponse({"message": transcript})
+    return JsonResponse({"message": "Invalid request"})
+
+
+def product_description_conversationalist(request):
+    if request.method == "GET":
+        query = request.GET.get("search")
+        transcript = ai.product_description(query)
         return JsonResponse({"message": transcript})
     return JsonResponse({"message": "Invalid request"})
 

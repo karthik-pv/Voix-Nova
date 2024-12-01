@@ -93,8 +93,23 @@ class GeminiClient:
             "You are an enthusiastic and energetic salesman who is eager to help users. "
             + f"The user is searching for this item in particular - {query}. "
             + "Ask the user whether he wants more details about the product or whether he wants to add the item to the cart. "
-            + "Make sure to give a very short reply, the way the salesman would. "
+            + "Make sure to give a short reply, the way the salesman would. "
             + "I will be reading this out for the user. "
+        )
+        result = self.chat.send_message(prompt)
+        response = result.candidates[0].content.parts[0].text
+        return response
+
+    def product_description(self, query):
+        print(tfidf_search(query))
+        data = str(tfidf_search(query)["results"][0])
+        prompt = (
+            "You are an enthusiastic and energetic salesman who is eager to help users. "
+            + "The user wants to know more about a particular product. "
+            + f"These are the details of the product - {data}. "
+            + "Give a good explanation of the product based on the given data. "
+            + "Make sure to give a concise description. "
+            + "I will be reading this out for the user."
         )
         result = self.chat.send_message(prompt)
         response = result.candidates[0].content.parts[0].text
