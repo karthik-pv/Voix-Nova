@@ -1,6 +1,7 @@
 from django.db.models import Q
 
 from .models import Products
+from .models  import PreviousOrders
 from collections import Counter
 import numpy as np
 from sklearn.cluster import KMeans
@@ -115,7 +116,7 @@ def get_combined_descriptions():
     return combined_description
 
 
-def recommend_filters(previous_orders):
+def recommend_filters(previous_orders=PreviousOrders.objects.all()):
     """
     Generate intelligent recommendations for product filters based on previous orders.
     :param previous_orders: Queryset of PreviousOrders objects.
