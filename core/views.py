@@ -249,9 +249,9 @@ def finalize_cart(request):
 
         # Clear the cart by deleting all cart items
         cart_items.delete()
-
+        message = ai.checkout_cart(total_cost)
         # Return the total cost as a JSON response
-        return JsonResponse({"total_cost": str(total_cost)}, status=200)
+        return JsonResponse({"message": message}, status=200)
 
     # If the request method is not GET, return an error response
     return JsonResponse({"error": "Invalid request method"}, status=400)

@@ -114,3 +114,16 @@ class GeminiClient:
         result = self.chat.send_message(prompt)
         response = result.candidates[0].content.parts[0].text
         return response
+
+    def checkout_cart(self, cost):
+        prompt = (
+            "You are an enthusiastic and energetic salesman who is eager to help users. "
+            + "The user wants to finalise and checkout his cart. "
+            + f"The cost for all his products is - {cost}. "
+            + "Ask the user for his address and say the shipment will happen there. "
+            + "Speak the way a salesman would and keep it short. "
+            + "I will be reading out your response to the user. "
+        )
+        result = self.chat.send_message(prompt)
+        response = result.candidates[0].content.parts[0].text
+        return response
