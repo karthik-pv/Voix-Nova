@@ -18,6 +18,8 @@ from .views import (
     image_similarity_view,
     recommendations_view,
     filter_reset,
+    recommendations_conversationalist,
+    cart_conversationalist,
 )
 
 urlpatterns = [
@@ -56,4 +58,14 @@ urlpatterns = [
     path("api/get_cart_products/", get_cart_products, name="get_cart_products"),
     path("home/", home, name="home"),
     path("api/filter_reset/", filter_reset, name="filter_reset"),
+    path(
+        "api/recommendations_conversationalist/",
+        recommendations_conversationalist,
+        name="recommendations_conversationalist",
+    ),
+    path(
+        "api/cart_conversationalist/",
+        cart_conversationalist,
+        name="cart_conversationalist",
+    ),
 ]

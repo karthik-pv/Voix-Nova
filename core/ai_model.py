@@ -23,7 +23,7 @@ class GeminiClient:
     def __init__(self):
         if self._initialized:
             return
-        api_key = "AIzaSyCUzIgP9r3bcjNOZXCi7yd8eQn3KjeopqU"
+        api_key = "AIzaSyD8UfB_I1fOl9nDkAY3Z8u6a_sHm8lAnEQ"
         if not api_key:
             raise ValueError(
                 "Gemini API key not found in settings or environment variables"
@@ -121,6 +121,34 @@ class GeminiClient:
             + "The user wants to finalise and checkout his cart. "
             + f"The cost for all his products is - {cost}. "
             + "Ask the user for his address and say the shipment will happen there. "
+            + "Speak the way a salesman would and keep it short. "
+            + "I will be reading out your response to the user. "
+        )
+        result = self.chat.send_message(prompt)
+        response = result.candidates[0].content.parts[0].text
+        return response
+
+    def recommendation_page(self, recommended_products):
+        prompt = (
+            "You are an enthusiastic and energetic salesman who is eager to help users. "
+            + "The user is in the recommendation page. "
+            + "These are the products that he will be recommended on screen. "
+            + f"PRODUCT DETAILS - {recommended_products}. "
+            + "Talk about the top 3 products in brief. "
+            + "Give a short and crisp response. "
+            + "I will read out your response to the user. "
+        )
+        result = self.chat.send_message(prompt)
+        response = result.candidates[0].content.parts[0].text
+        return response
+
+    def cart_page(self, cart_products, recommended_products):
+        prompt = (
+            "You are an enthusiastic and energetic salesman who is eager to help users. "
+            + "The user is in the cart page. "
+            + f"These are the products in his cart - {cart_products}. "
+            + f"Tell him that goin by the products in his cart, these are good products to buy, and recommend products from these - {recommended_products}. "
+            + "After that ask him whether he wants to checkout and finalise. "
             + "Speak the way a salesman would and keep it short. "
             + "I will be reading out your response to the user. "
         )

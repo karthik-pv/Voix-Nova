@@ -2,7 +2,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 
 from .models import Products
-from .models  import PreviousOrders
+from .models import PreviousOrders
 from collections import Counter
 import numpy as np
 from sklearn.cluster import KMeans
@@ -246,8 +246,6 @@ def reset_filters():
     returnable_filters.clear()
 
 
-
-
 def recommend_filters():
     """
     Generate product recommendations based on frequency-based filter criteria and seasonal suggestions.
@@ -257,7 +255,9 @@ def recommend_filters():
     all_products = Products.objects.all()
 
     if not all_products.exists():
-        return JsonResponse({"message": "No products found. Recommendations unavailable."}, status=404)
+        return JsonResponse(
+            {"message": "No products found. Recommendations unavailable."}, status=404
+        )
 
     # Extract attribute data from products
     attributes = {
@@ -295,30 +295,44 @@ def recommend_filters():
         else:
             counter = Counter(values)
             top_choices = counter.most_common(3)  # Top 3 most common filter values
-            frequency_based_recommendations[key] = [choice[0] for choice in top_choices if choice[0]]
+            frequency_based_recommendations[key] = [
+                choice[0] for choice in top_choices if choice[0]
+            ]
 
     # 2. Seasonal/Time-Based Suggestions
     current_month = datetime.now().month
     seasonal_based_recommendations = {}
     if current_month in [12, 1, 2]:
-        seasonal_based_recommendations["seasonal"] = ["Sweaters", "Long Sleeve Shirts", "Wool"]
+        seasonal_based_recommendations["seasonal"] = [
+            "Sweaters",
+            "Long Sleeve Shirts",
+            "Wool",
+        ]
     elif current_month in [6, 7, 8]:
         seasonal_based_recommendations["seasonal"] = ["Tank Tops", "Shorts", "Cotton"]
     else:
-        seasonal_based_recommendations["seasonal"] = ["T-Shirts", "Pima Cotton", "Casual"]
+        seasonal_based_recommendations["seasonal"] = [
+            "T-Shirts",
+            "Pima Cotton",
+            "Casual",
+        ]
 
     # 3. Filter products based on the recommendations
     # Frequency-based products
     frequency_filtered_products = all_products
     for key, values in frequency_based_recommendations.items():
         if key != "price_range" and key != "seasonal":
-            frequency_filtered_products = frequency_filtered_products.filter(**{f"{key}__in": values})
+            frequency_filtered_products = frequency_filtered_products.filter(
+                **{f"{key}__in": values}
+            )
 
     # Seasonal-based products
     seasonal_filtered_products = all_products
     for key, values in seasonal_based_recommendations.items():
         if key == "seasonal":
-            seasonal_filtered_products = seasonal_filtered_products.filter(category__in=values)
+            seasonal_filtered_products = seasonal_filtered_products.filter(
+                category__in=values
+            )
 
     # Convert the filtered products to a list of dictionaries for JSON response
     frequency_product_list = [
@@ -336,7 +350,7 @@ def recommend_filters():
             "image1_url": product.image1_url,
             "image2_url": product.image2_url,
             "image3_url": product.image3_url,
-            "description": product.description
+            "description": product.description,
         }
         for product in frequency_filtered_products
     ]
@@ -353,16 +367,12 @@ def recommend_filters():
             "length": product.length,
             "category": product.category,
             "price": product.price,
-            "image1_url":product.image1_url,
+            "image1_url": product.image1_url,
             "image2_url": product.image2_url,
             "image3_url": product.image3_url,
-            "description":product.description
+            "description": product.description,
         }
         for product in seasonal_filtered_products
     ]
 
-    return JsonResponse({
-        "frequency_based_products": frequency_product_list,
-        "seasonal_based_products": seasonal_product_list
-    }, safe=False)
-
+    return [frequency_product_list, seasonal_product_list]

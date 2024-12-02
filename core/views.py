@@ -28,7 +28,14 @@ def recommendations_view(request):
     :param request: HTTP request.
     :return: JsonResponse with the recommendations.
     """
-    return recommend_filters()
+    results = recommend_filters()
+    return JsonResponse(
+        {
+            "frequency_based_products": results[0],
+            "seasonal_based_products": results[1],
+        },
+        safe=False,
+    )
 
 
 @csrf_exempt
@@ -273,3 +280,20 @@ def get_cart_products(request):
 
     # If the request method is not GET, return an error response
     return JsonResponse({"error": "Invalid request method"}, status=400)
+
+
+def recommendations_conversationalist(request):
+    if request.method == "GET":
+        transcript = ai.recommendation_page(str(recommend_filters()))
+        return JsonResponse({"message": transcript}, status=200)
+    return JsonResponse({"message": "Invalid request"})
+
+
+def cart_conversationalist(request):
+    if request.method == "GET":
+        cart_items = Cart.objects.all()
+        products = [cart_item.product for cart_item in cart_items]
+        serialized_products = ProductSerializer(products, many=True).data
+        transcript = ai.cart_page(str(serialized_products), str(recommend_filters()))
+        return JsonResponse({"message": transcript}, status=200)
+    return JsonResponse({"message": "Invalid request"})
