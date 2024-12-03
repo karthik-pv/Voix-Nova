@@ -20,6 +20,7 @@ from .views import (
     filter_reset,
     recommendations_conversationalist,
     cart_conversationalist,
+    basic_salesman_prompt,
 )
 
 urlpatterns = [
@@ -68,4 +69,5 @@ urlpatterns = [
         cart_conversationalist,
         name="cart_conversationalist",
     ),
+    path("api/general_salesman/", basic_salesman_prompt, name="general_salesman"),
 ]
