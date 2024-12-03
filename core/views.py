@@ -8,18 +8,15 @@ from .tfidf import tfidf_search
 from rest_framework.decorators import api_view
 import json
 from django.views.decorators.csrf import csrf_exempt
-
-from .utils import image_similarity_search, filter_extractor
-
+import os
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 from .utils import image_similarity_search, filter_extractor, recommend_filters
 
 
 ai = GeminiClient()
 filter_var = []
-import os
-from django.views.decorators.csrf import csrf_exempt
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
+page_visit_log = []
 
 
 def recommendations_view(request):
@@ -102,6 +99,17 @@ def image_similarity_view(request):
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
+def basic_salesman_prompt(request):
+    if request.method == "GET":
+        query = request.GET.get("data")
+        product_details = get_all_products()
+        transcript = ai.basic_salesman_prompt(
+            query, product_details, str(page_visit_log)
+        )
+        return JsonResponse({"message": transcript})
+    return JsonResponse({"message": "Invalid request"})
+
+
 def filter_reset(request):
     if request.method == "GET":
         global filter_var
@@ -114,7 +122,8 @@ def filter_reset(request):
 
 def home_page_conversationalist(request):
     if request.method == "GET":
-        transcript = ai.home_page()
+        transcript = ai.home_page(str(page_visit_log))
+        page_visit_log.append("home page - search query - '' ")
         return JsonResponse({"message": transcript})
     return JsonResponse({"message": "Invalid request"})
 
@@ -126,17 +135,11 @@ def home(request):
     return render(request, "search.html")
 
 
-def home_page_conversationalist(request):
-    if request.method == "GET":
-        transcript = ai.home_page()
-        return JsonResponse({"message": transcript})
-    return JsonResponse({"message": "Invalid request"})
-
-
 def product_list_page_conversationalist(request):
     if request.method == "GET":
         query = request.GET.get("search")
-        transcript = ai.product_list_page(query)
+        transcript = ai.product_list_page(query, str(page_visit_log))
+        page_visit_log.append("product list page - search query - " + query + " ")
         return JsonResponse({"message": transcript})
     return JsonResponse({"message": "Invalid request"})
 
@@ -145,8 +148,9 @@ def filter_conversationalist(request):
     global filter_var
     if request.method == "GET":
         query = request.GET.get("filterMsg")
-        transcript = ai.filtering_interaction(query, filter_var)
+        transcript = ai.filtering_interaction(query, filter_var, str(page_visit_log))
         filter_extractor(query, filter_var)
+        page_visit_log.append("filter page - search query - " + query + " ")
         return JsonResponse({"message": transcript, "filters": filter_var})
     return JsonResponse({"message": "Invalid request"})
 
@@ -154,7 +158,8 @@ def filter_conversationalist(request):
 def product_details_page_conversationalist(request):
     if request.method == "GET":
         query = request.GET.get("search")
-        transcript = ai.product_details_page(query)
+        transcript = ai.product_details_page(query, str(page_visit_log))
+        page_visit_log.append("product details page - search query - " + query + " ")
         return JsonResponse({"message": transcript})
     return JsonResponse({"message": "Invalid request"})
 
@@ -162,7 +167,10 @@ def product_details_page_conversationalist(request):
 def product_description_conversationalist(request):
     if request.method == "GET":
         query = request.GET.get("search")
-        transcript = ai.product_description(query)
+        transcript = ai.product_description(query, str(page_visit_log))
+        page_visit_log.append(
+            "product description page - search query - " + query + " "
+        )
         return JsonResponse({"message": transcript})
     return JsonResponse({"message": "Invalid request"})
 
@@ -216,7 +224,7 @@ def add_to_cart(request):
             return JsonResponse(
                 {"message": "No products found to add to cart"}, status=404
             )
-
+        page_visit_log.append("cart page - search query - " + query + " ")
         add_to_cart_id = results[0]["id"]
         product = Products.objects.get(id=add_to_cart_id)
         cart_item = Cart(product=product)
@@ -284,7 +292,9 @@ def get_cart_products(request):
 
 def recommendations_conversationalist(request):
     if request.method == "GET":
-        transcript = ai.recommendation_page(str(recommend_filters()))
+        transcript = ai.recommendation_page(
+            str(recommend_filters()), str(page_visit_log)
+        )
         return JsonResponse({"message": transcript}, status=200)
     return JsonResponse({"message": "Invalid request"})
 
@@ -294,6 +304,8 @@ def cart_conversationalist(request):
         cart_items = Cart.objects.all()
         products = [cart_item.product for cart_item in cart_items]
         serialized_products = ProductSerializer(products, many=True).data
-        transcript = ai.cart_page(str(serialized_products), str(recommend_filters()))
+        transcript = ai.cart_page(
+            str(serialized_products), str(recommend_filters()), str(page_visit_log)
+        )
         return JsonResponse({"message": transcript}, status=200)
     return JsonResponse({"message": "Invalid request"})
