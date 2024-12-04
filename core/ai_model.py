@@ -45,12 +45,15 @@ class GeminiClient:
 
     def basic_salesman_prompt(self, query, product_details, page_visit_log):
         prompt = (
-            "You are an enthusiastic and an energetic salesman who constantly answers to user's queries. "
-            + f"These are all the product details - {product_details}"
+            +f"These are all the product details - {product_details}"
             + "Use these details to answer any query the user has. "
-            + f"This is the users activity so far - {page_visit_log}. "
+            + f"This is the users activity history so far - {page_visit_log}. "
             + "Keeping the users activity in mind give an appropriate response to his query. "
             + f"The users query is - {query}."
+            + "Make sure to use the users history to give a response which gives the user a more customised experience. "
+            + "You are an enthusiastic and energetic salesman who is eager to help users. "
+            + "Make sure your response only contains things the salesman would say, and give a concise yet energetic response. "
+            + "I will be reading this out for the user. "
         )
         result = self.chat.send_message(prompt)
         response = result.candidates[0].content.parts[0].text
@@ -58,30 +61,33 @@ class GeminiClient:
 
     def home_page(self, page_visit_log):
         prompt = (
-            "You are an enthusiastic and energetic salesman who is eager to help users. "
-            + "The user is currently in the home page. "
+            "The user is currently in the home page. "
             + "Ask him if he has something in mind or whether he would like some recommendations. "
             + "I am passing a log of the users activity, keep that in mind while giving a response. "
             + "If it is first time in the home page, introduce yourself as nova. "
             + "If this is not his first time in the home page, handle it accordingly. Use his activity details to give a customised response. "
             + f"USER ACTIVITY LOG - {page_visit_log}. "
-            + "Make sure your response only contains things the salesman would say, and give a short response. "
+            + "Make sure to use the users history to give a response which gives the user a more customised experience. "
+            + "You are an enthusiastic and energetic salesman who is eager to help users. "
+            + "Make sure your response only contains things the salesman would say, and give a concise yet energetic response. "
             + "I will be reading this out for the user. "
         )
         result = self.chat.send_message(prompt)
         response = result.candidates[0].content.parts[0].text
         return response
 
-    def product_list_page(self, query, page_visit_log):
+    def product_list_page(self, query, page_visit_log, products):
         prompt = (
-            "You are an enthusiastic and energetic salesman who is eager to help users. "
-            + f"The user is currently in the product list page and is looking for {query}."
+            f"The user is currently in the product list page and is looking for {query}."
             + "Ask the user whether he wants to filter products, or whether he wants to know more about a particular product. "
             + "I am passing a log of the users activity, keep that in mind while giving a response. "
             + "If this is not his first time in the page, handle it accordingly. Use his activity details to give a customised response. "
             + "Refer an item that he has searched for before and make other recommendations. "
             + f"USER ACTIVITY LOG - {page_visit_log}. "
-            + "Make sure to give a very short reply, the way the salesman would. "
+            + f"PRODUCT LIST - {products}"
+            + "Make sure to use the users history to give a response which gives the user a more customised experience and suggest different products from the given product list to go with the previous searches. "
+            + "You are an enthusiastic and energetic salesman who is eager to help users. "
+            + "Make sure your response only contains things the salesman would say, and give a concise yet energetic response. "
             + "I will be reading this out for the user. "
         )
         result = self.chat.send_message(prompt)
@@ -99,6 +105,10 @@ class GeminiClient:
             + "If his statement includes a category of filters, then mention that you have filtered according to this category. "
             + "Offer to filter according to the remaining categories he hasn't filtered by yet. "
             + "The categories of filters available are colors, categories, gender and fit. "
+            + "Make sure to use the users history to give a response which gives the user a more customised experience. "
+            + "You are an enthusiastic and energetic salesman who is eager to help users. "
+            + "Make sure your response only contains things the salesman would say, and give a concise yet energetic response. "
+            + "I will be reading this out for the user. "
         )
         result = self.chat.send_message(prompt)
         response = result.candidates[0].content.parts[0].text
@@ -106,12 +116,13 @@ class GeminiClient:
 
     def product_details_page(self, query, page_visit_log):
         prompt = (
-            "You are an enthusiastic and energetic salesman who is eager to help users. "
-            + f"The user is searching for this item in particular - {query}. "
+            f"The user is searching for this item in particular - {query}. "
             + "Ask the user whether he wants more details about the product or whether he wants to add the item to the cart. "
             + "If this is not his first time in the page, handle it accordingly. Use his activity details to give a customised response. "
             + f"USER ACTIVITY LOG - {page_visit_log}. "
-            + "Make sure to give a short reply, the way the salesman would. "
+            + "Make sure to use the users history to give a response which gives the user a more customised experience. "
+            + "You are an enthusiastic and energetic salesman who is eager to help users. "
+            + "Make sure your response only contains things the salesman would say, and give a concise yet energetic response. "
             + "I will be reading this out for the user. "
         )
         result = self.chat.send_message(prompt)
@@ -122,15 +133,16 @@ class GeminiClient:
         print(tfidf_search(query))
         data = str(tfidf_search(query)["results"][0])
         prompt = (
-            "You are an enthusiastic and energetic salesman who is eager to help users. "
-            + "The user wants to know more about a particular product. "
+            "The user wants to know more about a particular product. "
             + f"These are the details of the product - {data}. "
             + "Give a good explanation of the product based on the given data. "
             + "If this is not his first time in the page, handle it accordingly. Use his activity details to give a customised response. "
             + "Mention a product that he searched up before and suggest that the current product goes well with that, or other similar salesman tactics. "
             + f"USER ACTIVITY LOG - {page_visit_log}. "
-            + "Make sure to give a concise description. "
-            + "I will be reading this out for the user."
+            + "Make sure to use the users history to give a response which gives the user a more customised experience. "
+            + "You are an enthusiastic and energetic salesman who is eager to help users. "
+            + "Make sure your response only contains things the salesman would say, and give a concise yet energetic response. "
+            + "I will be reading this out for the user. "
         )
         result = self.chat.send_message(prompt)
         response = result.candidates[0].content.parts[0].text
@@ -138,8 +150,7 @@ class GeminiClient:
 
     def checkout_cart(self, cost):
         prompt = (
-            "You are an enthusiastic and energetic salesman who is eager to help users. "
-            + "The user wants to finalise and checkout his cart. "
+            "The user wants to finalise and checkout his cart. "
             + f"The cost for all his products is - {cost}. "
             + "Ask the user for his address and say the shipment will happen there. "
             + "Speak the way a salesman would and keep it short. "
@@ -151,15 +162,16 @@ class GeminiClient:
 
     def recommendation_page(self, recommended_products, page_visit_log):
         prompt = (
-            "You are an enthusiastic and energetic salesman who is eager to help users. "
-            + "The user is in the recommendation page. "
+            "The user is in the recommendation page. "
             + "These are the products that he will be recommended on screen. "
             + f"PRODUCT DETAILS - {recommended_products}. "
             + "If this is not his first time asking for recommendations, handle it accordingly. Use his activity details to give a customised response. "
             + f"USER ACTIVITY LOG - {page_visit_log}. "
             + "Talk about the top 3 products in brief. "
-            + "Give a short and crisp response. "
-            + "I will read out your response to the user. "
+            + "Make sure to use the users history to give a response which gives the user a more customised experience. "
+            + "You are an enthusiastic and energetic salesman who is eager to help users. "
+            + "Make sure your response only contains things the salesman would say, and give a concise yet energetic response. "
+            + "I will be reading this out for the user. "
         )
         result = self.chat.send_message(prompt)
         response = result.candidates[0].content.parts[0].text
@@ -167,15 +179,16 @@ class GeminiClient:
 
     def cart_page(self, cart_products, recommended_products, page_visit_log):
         prompt = (
-            "You are an enthusiastic and energetic salesman who is eager to help users. "
-            + "The user is in the cart page. "
+            "The user is in the cart page. "
             + f"These are the products in his cart - {cart_products}. "
             + f"Tell him that goin by the products in his cart, these are good products to buy, and recommend products from these - {recommended_products}. "
             + "If this is not his first time in the cart page, handle it accordingly. Use his activity details to give a customised response. "
             + f"USER ACTIVITY LOG - {page_visit_log}. "
             + "After that ask him whether he wants to checkout and finalise. "
-            + "Speak the way a salesman would and keep it short. "
-            + "I will be reading out your response to the user. "
+            + "Make sure to use the users history to give a response which gives the user a more customised experience. "
+            + "You are an enthusiastic and energetic salesman who is eager to help users. "
+            + "Make sure your response only contains things the salesman would say, and give a concise yet energetic response. "
+            + "I will be reading this out for the user. "
         )
         result = self.chat.send_message(prompt)
         response = result.candidates[0].content.parts[0].text

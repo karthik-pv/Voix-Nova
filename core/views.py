@@ -104,7 +104,7 @@ def basic_salesman_prompt(request):
         query = request.GET.get("data")
         product_details = get_all_products()
         transcript = ai.basic_salesman_prompt(
-            query, product_details, str(page_visit_log)
+            query, str(product_details), str(page_visit_log)
         )
         return JsonResponse({"message": transcript})
     return JsonResponse({"message": "Invalid request"})
@@ -138,7 +138,8 @@ def home(request):
 def product_list_page_conversationalist(request):
     if request.method == "GET":
         query = request.GET.get("search")
-        transcript = ai.product_list_page(query, str(page_visit_log))
+        products = get_all_products()
+        transcript = ai.product_list_page(query, str(page_visit_log), str(products))
         page_visit_log.append("product list page - search query - " + query + " ")
         return JsonResponse({"message": transcript})
     return JsonResponse({"message": "Invalid request"})
@@ -175,7 +176,7 @@ def product_description_conversationalist(request):
     return JsonResponse({"message": "Invalid request"})
 
 
-def get_all_products(request):
+def get_all_products():
     print("here")
     products = Products.objects.all()
     serializer = ProductSerializer(products, many=True)
