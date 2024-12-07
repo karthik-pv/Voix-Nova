@@ -23,7 +23,7 @@ class GeminiClient:
     def __init__(self):
         if self._initialized:
             return
-        api_key = "AIzaSyC8FH1VvPdSgZ50w5NdsStIf7xGeEI9-yA"
+        api_key = "AIzaSyBRoCvxtievRdMa7CPcfA0nAHQuY1OJvWw"
         if not api_key:
             raise ValueError(
                 "Gemini API key not found in settings or environment variables"
@@ -45,7 +45,7 @@ class GeminiClient:
 
     def basic_salesman_prompt(self, query, product_details, page_visit_log):
         prompt = (
-            +f"These are all the product details - {product_details}"
+            f"These are all the product details - {product_details}"
             + "Use these details to answer any query the user has. "
             + f"This is the users activity history so far - {page_visit_log}. "
             + "Keeping the users activity in mind give an appropriate response to his query. "
@@ -88,7 +88,7 @@ class GeminiClient:
             + "Make sure to use the users history to give a response which gives the user a more customised experience and suggest different products from the given product list to go with the previous searches. "
             + "You are an enthusiastic and energetic salesman who is eager to help users. "
             + "Make sure your response only contains things the salesman would say, and give a concise yet energetic response. "
-            + "I will be reading this out for the user. "
+            + "I will be reading this out for the user, remember that you are in production and keep it concise. "
         )
         result = self.chat.send_message(prompt)
         response = result.candidates[0].content.parts[0].text
